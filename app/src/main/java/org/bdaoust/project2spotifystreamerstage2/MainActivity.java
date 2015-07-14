@@ -2,7 +2,6 @@ package org.bdaoust.project2spotifystreamerstage2;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -17,9 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
@@ -30,12 +27,11 @@ import kaaes.spotify.webapi.android.models.Image;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-
+import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity{
 
     private ArtistListAdapter artistListAdapter;
-    private HashMap<String, Bitmap> thumbnailsCache;
     private SpotifyService spotifyService;
     private Context context;
     private Toast toast;
@@ -57,7 +53,6 @@ public class MainActivity extends AppCompatActivity{
 
         spotifyApi = new SpotifyApi();
         spotifyService = spotifyApi.getService();
-        thumbnailsCache = new HashMap<>();
         context = this;
 
         artistQuery = (EditText)findViewById(R.id.artistQuery);
@@ -115,19 +110,7 @@ public class MainActivity extends AppCompatActivity{
 
             preferedArtistImage = Tools.findPreferedSizeImage(artists.get(position).images, 200);
             if(preferedArtistImage !=null) {
-                if(thumbnailsCache.containsKey(preferedArtistImage.url)){
-                    artistIcon.setImageBitmap(thumbnailsCache.get(preferedArtistImage.url));
-                }
-                else {
-                    ThumbnailDownloader thumbnailDownloader = new ThumbnailDownloader(preferedArtistImage.url) {
-                        @Override
-                        public void onThumbnailDowloaded(String thumbnailPath, Bitmap bitmap) {
-                            thumbnailsCache.put(thumbnailPath,bitmap);
-                            artistIcon.setImageBitmap(bitmap);
-                        }
-                    };
-                    thumbnailDownloader.download();
-                }
+                Picasso.with(context).load(preferedArtistImage.url).into(artistIcon);
             }
 
             artistView.setTag(artists.get(position));
@@ -152,15 +135,12 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-
-
     private class ArtistNameTextWatch implements TextWatcher{
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             if(toast != null){
                 toast.cancel();
             }
-            thumbnailsCache.clear();
         }
 
         @Override

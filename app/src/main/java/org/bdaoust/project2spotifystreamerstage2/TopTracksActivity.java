@@ -1,6 +1,6 @@
 package org.bdaoust.project2spotifystreamerstage2;
 
-import android.graphics.Bitmap;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -12,9 +12,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,16 +24,16 @@ import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import com.squareup.picasso.Picasso;
 
 public class TopTracksActivity extends AppCompatActivity{
 
     private SpotifyService spotifyService;
-
     private String artistId;
 
     private List<Track> artistTopTracks;
     private ArtistTopTracksListAdapter artistTopTracksListAdapter;
-    private HashMap<String, Bitmap> thumbnailsCache;
+    private Context context;
 
     private final static String ARTIST_NAME_KEY = "ARTIST_NAME";
     private final static String ARTIST_ID_KEY = "ARTIST_ID";
@@ -62,7 +60,7 @@ public class TopTracksActivity extends AppCompatActivity{
 
         spotifyApi = new SpotifyApi();
         spotifyService = spotifyApi.getService();
-        thumbnailsCache = new HashMap<>();
+        context = this;
 
 
         artistTopTracks = new ArrayList<>();
@@ -141,19 +139,7 @@ public class TopTracksActivity extends AppCompatActivity{
 
             preferedAlbumImage = Tools.findPreferedSizeImage(artistTopTracks.get(position).album.images, 200);
             if(preferedAlbumImage !=null) {
-                if(thumbnailsCache.containsKey(preferedAlbumImage.url)){
-                    albumIcon.setImageBitmap(thumbnailsCache.get(preferedAlbumImage.url));
-                }
-                else {
-                    ThumbnailDownloader thumbnailDownloader = new ThumbnailDownloader(preferedAlbumImage.url) {
-                        @Override
-                        public void onThumbnailDowloaded(String thumbnailPath, Bitmap bitmap) {
-                            thumbnailsCache.put(thumbnailPath,bitmap);
-                            albumIcon.setImageBitmap(bitmap);
-                        }
-                    };
-                    thumbnailDownloader.download();
-                }
+                Picasso.with(context).load(preferedAlbumImage.url).into(albumIcon);
             }
 
             return artistTrackView;
