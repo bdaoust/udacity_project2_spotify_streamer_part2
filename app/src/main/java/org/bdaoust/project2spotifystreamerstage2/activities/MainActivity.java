@@ -1,4 +1,4 @@
-package org.bdaoust.project2spotifystreamerstage2;
+package org.bdaoust.project2spotifystreamerstage2.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +28,9 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import com.squareup.picasso.Picasso;
+
+import org.bdaoust.project2spotifystreamerstage2.R;
+import org.bdaoust.project2spotifystreamerstage2.Tools;
 
 public class MainActivity extends AppCompatActivity{
 

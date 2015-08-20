@@ -1,6 +1,7 @@
-package org.bdaoust.project2spotifystreamerstage2;
+package org.bdaoust.project2spotifystreamerstage2.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -26,7 +27,11 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 import com.squareup.picasso.Picasso;
 
-public class TopTracksActivity extends AppCompatActivity{
+import org.bdaoust.project2spotifystreamerstage2.QueryMapOptions;
+import org.bdaoust.project2spotifystreamerstage2.R;
+import org.bdaoust.project2spotifystreamerstage2.Tools;
+
+public class TopTracksActivity extends AppCompatActivity implements View.OnClickListener{
 
     private SpotifyService spotifyService;
     private String artistId;
@@ -98,6 +103,14 @@ public class TopTracksActivity extends AppCompatActivity{
         return true;
     }
 
+    @Override
+    public void onClick(View v) {
+        Intent intent;
+
+        intent = new Intent(context,MediaPlayerActivity.class);
+        startActivity(intent);
+    }
+
     private class ArtistTopTracksListAdapter extends BaseAdapter {
 
         @Override
@@ -136,14 +149,16 @@ public class TopTracksActivity extends AppCompatActivity{
             albumName.setText(artistTopTracks.get(position).album.name);
             trackName.setText(artistTopTracks.get(position).name);
             albumIcon.setImageBitmap(null);
-
             preferedAlbumImage = Tools.findPreferedSizeImage(artistTopTracks.get(position).album.images, 200);
             if(preferedAlbumImage !=null) {
                 Picasso.with(context).load(preferedAlbumImage.url).into(albumIcon);
             }
 
+            artistTrackView.setOnClickListener((TopTracksActivity)context);
+
             return artistTrackView;
         }
     }
+
 
 }
