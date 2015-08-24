@@ -1,178 +1,82 @@
 package org.bdaoust.project2spotifystreamerstage2.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.Menu;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Image;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
-import com.squareup.picasso.Picasso;
-
+import org.bdaoust.project2spotifystreamerstage2.MyKeys;
 import org.bdaoust.project2spotifystreamerstage2.R;
-import org.bdaoust.project2spotifystreamerstage2.Tools;
+import org.bdaoust.project2spotifystreamerstage2.fragments.ArtistSearchFragment;
+import org.bdaoust.project2spotifystreamerstage2.fragments.TopTracksFragment;
 
-public class MainActivity extends AppCompatActivity{
 
-    private ArtistListAdapter artistListAdapter;
-    private SpotifyService spotifyService;
-    private Context context;
-    private Toast toast;
-    private List<Artist> artists;
+public class MainActivity extends AppCompatActivity implements ArtistSearchFragment.OnArtistClickListener{
 
-    private final static String ARTIST_NAME_KEY = "ARTIST_NAME";
-    private final static String ARTIST_ID_KEY = "ARTIST_ID";
+    private boolean twoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        SpotifyApi spotifyApi;
-        EditText artistQuery;
-        ListView artistSearchResults;
-        ArtistNameTextWatch artistNameTextWatch;
-
         setContentView(R.layout.activity_main);
 
-        spotifyApi = new SpotifyApi();
-        spotifyService = spotifyApi.getService();
-        context = this;
+        if(findViewById(R.id.top_tracks_container) != null){
 
-        artistQuery = (EditText)findViewById(R.id.artistQuery);
-        artistNameTextWatch = new ArtistNameTextWatch();
-        artistQuery.addTextChangedListener(artistNameTextWatch);
+            twoPane = true;
 
-        artists = new ArrayList<>();
-        artistListAdapter = new ArtistListAdapter();
-        artistSearchResults = (ListView)findViewById(R.id.artistSearchResults);
-        artistSearchResults.setAdapter(artistListAdapter);
+            if (savedInstanceState == null){
+                FragmentManager fragmentManager;
+                FragmentTransaction fragmentTransaction;
+
+                fragmentManager = getSupportFragmentManager();
+                fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.top_tracks_container,new TopTracksFragment());
+                fragmentTransaction.commit();
+            }
+        }
+        else {
+            twoPane = false;
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
         return true;
     }
 
-    private class ArtistListAdapter extends BaseAdapter {
+    @Override
+    public void onItemSelected(String artistName, String artistId) {
+        if(twoPane){
 
-        @Override
-        public int getCount() {
-            return artists.size();
+            Bundle args;
+            TopTracksFragment topTracksFragment;
+            FragmentManager fragmentManager;
+            FragmentTransaction fragmentTransaction;
+
+            args = new Bundle();
+            args.putString(MyKeys.ARTIST_NAME_KEY, artistName);
+            args.putString(MyKeys.ARTIST_ID_KEY, artistId);
+
+            topTracksFragment = new TopTracksFragment();
+            topTracksFragment.setArguments(args);
+
+            fragmentManager = getSupportFragmentManager();
+            fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.top_tracks_container, topTracksFragment);
+            fragmentTransaction.commit();
         }
+        else {
+            Intent intent;
 
-        @Override
-        public Object getItem(int position) {
-            return artists.get(position);
-        }
+            intent = new Intent(this,TopTracksActivity.class);
+            intent.putExtra(MyKeys.ARTIST_NAME_KEY, artistName);
+            intent.putExtra(MyKeys.ARTIST_ID_KEY, artistId);
 
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View artistView;
-            TextView artistName;
-            final ImageView artistIcon;
-            Image preferedArtistImage;
-
-            if(convertView == null) {
-                artistView = getLayoutInflater().inflate(R.layout.artist_list_item, null);
-            }
-            else {
-                artistView = convertView;
-            }
-
-            artistName = (TextView)artistView.findViewById(R.id.artistName);
-            artistIcon = (ImageView)artistView.findViewById(R.id.artistIcon);
-
-            artistName.setText(artists.get(position).name);
-            artistIcon.setImageBitmap(null);
-
-            preferedArtistImage = Tools.findPreferedSizeImage(artists.get(position).images, 200);
-            if(preferedArtistImage !=null) {
-                Picasso.with(context).load(preferedArtistImage.url).into(artistIcon);
-            }
-
-            artistView.setTag(artists.get(position));
-
-            artistView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Artist artist;
-                    Intent intent;
-
-                    artist = (Artist)v.getTag();
-                    intent = new Intent(context,TopTracksActivity.class);
-                    intent.putExtra(ARTIST_NAME_KEY, artist.name);
-                    intent.putExtra(ARTIST_ID_KEY, artist.id);
-
-                    startActivity(intent);
-                }
-            });
-
-            return artistView;
+            startActivity(intent);
         }
     }
-
-
-    private class ArtistNameTextWatch implements TextWatcher{
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            if(toast != null){
-                toast.cancel();
-            }
-        }
-
-        @Override
-        public void onTextChanged(CharSequence artist, int start, int before, int count) {
-            spotifyService.searchArtists(artist.toString(), new Callback<ArtistsPager>() {
-
-                @Override
-                public void success(ArtistsPager artistsPager, Response response) {
-                    artists = artistsPager.artists.items;
-                    artistListAdapter.notifyDataSetChanged();
-
-                    if(artists.size() == 0){
-                        toast  = Toast.makeText(context, getText(R.string.search_result_no_artists_found), Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-                    artists.clear();
-                    artistListAdapter.notifyDataSetChanged();
-                }
-            });
-
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-        }
-    }
-
 }
