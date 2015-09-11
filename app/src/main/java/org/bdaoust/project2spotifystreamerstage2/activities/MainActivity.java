@@ -7,13 +7,13 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 
-import org.bdaoust.project2spotifystreamerstage2.MyKeys;
+import org.bdaoust.project2spotifystreamerstage2.utils.MyKeys;
 import org.bdaoust.project2spotifystreamerstage2.R;
 import org.bdaoust.project2spotifystreamerstage2.fragments.ArtistSearchFragment;
 import org.bdaoust.project2spotifystreamerstage2.fragments.TopTracksFragment;
 
 
-public class MainActivity extends AppCompatActivity implements ArtistSearchFragment.OnArtistClickListener{
+public class MainActivity extends AppCompatActivity implements ArtistSearchFragment.OnArtistListChangeListener{
 
     private boolean twoPane;
 
@@ -49,34 +49,42 @@ public class MainActivity extends AppCompatActivity implements ArtistSearchFragm
     }
 
     @Override
-    public void onItemSelected(String artistName, String artistId) {
+    public void onItemSelected(long artistId) {
         if(twoPane){
-
-            Bundle args;
-            TopTracksFragment topTracksFragment;
-            FragmentManager fragmentManager;
-            FragmentTransaction fragmentTransaction;
-
-            args = new Bundle();
-            args.putString(MyKeys.ARTIST_NAME_KEY, artistName);
-            args.putString(MyKeys.ARTIST_ID_KEY, artistId);
-
-            topTracksFragment = new TopTracksFragment();
-            topTracksFragment.setArguments(args);
-
-            fragmentManager = getSupportFragmentManager();
-            fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.top_tracks_container, topTracksFragment);
-            fragmentTransaction.commit();
+            loadDetailFragment(artistId);
         }
         else {
             Intent intent;
 
             intent = new Intent(this,TopTracksActivity.class);
-            intent.putExtra(MyKeys.ARTIST_NAME_KEY, artistName);
             intent.putExtra(MyKeys.ARTIST_ID_KEY, artistId);
 
             startActivity(intent);
         }
+    }
+
+    @Override
+    public void onSearchTermChanged(String searchTerm) {
+        if(twoPane){
+            loadDetailFragment(-1);
+        }
+    }
+
+    private void loadDetailFragment(long artistId){
+        Bundle args;
+        TopTracksFragment topTracksFragment;
+        FragmentManager fragmentManager;
+        FragmentTransaction fragmentTransaction;
+
+        args = new Bundle();
+        args.putLong(MyKeys.ARTIST_ID_KEY, artistId);
+
+        topTracksFragment = new TopTracksFragment();
+        topTracksFragment.setArguments(args);
+
+        fragmentManager = getSupportFragmentManager();
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.top_tracks_container, topTracksFragment);
+        fragmentTransaction.commit();
     }
 }

@@ -7,4 +7,8 @@
 
     <dimen name="list_icon_size">60dp</dimen>
     <dimen name="list_icon_margin_right">8dp</dimen>
+
+    <dimen name="large_album_cover_size">200dp</dimen>
+
+    <dimen name="media_player_padding">16dp</dimen>
 </resources>

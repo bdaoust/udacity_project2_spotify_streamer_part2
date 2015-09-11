@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingTop="@dimen/list_item_vertical_padding"
     android:paddingBottom="@dimen/list_item_vertical_padding"
-    android:background="@color/list_background_color">
+    android:background="@drawable/touch_selector">
 
     <ImageView
         android:id="@+id/artistIcon"
@@ -19,5 +19,5 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
-        android:text="Coldplay"/>
+        android:text="@string/artistNamePlaceholder"/>
 </LinearLayout>

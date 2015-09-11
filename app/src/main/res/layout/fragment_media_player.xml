@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#ffffff"
-    android:padding="16dp">
+    android:background="@android:color/white"
+    android:padding="@dimen/media_player_padding">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -16,31 +16,34 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/abc_text_size_medium_material"
-            android:text="P!nk"/>
+            android:text="@string/artistNamePlaceholder"/>
         <TextView
             android:id="@+id/albumName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="The Truth About Love"/>
+            android:text="@string/albumNamePlaceholder"/>
+        <ImageView
+            android:id="@+id/albumCover"
+            android:layout_width="@dimen/large_album_cover_size"
+            android:layout_height="@dimen/large_album_cover_size"
+            android:background="@color/thumbnail_placeholder_color"
+            android:layout_gravity="center_horizontal"
+            android:contentDescription="@string/contentDescriptionAlbumCover"/>
     </LinearLayout>
-    <ImageView
-        android:id="@+id/albumCover"
-        android:layout_width="274dp"
-        android:layout_height="311dp"
-        android:src="@drawable/placeholder_album"
-        android:layout_gravity="center_horizontal" />
+
 
     <TextView
         android:id="@+id/trackName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Just Give Me a Reason"
+        android:text="@string/trackNamePlaceholder"
         android:gravity="center"/>
 
     <SeekBar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/seekBar" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -50,13 +53,13 @@
             android:id="@+id/currentTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="0:00"
+            android:text="@string/currentTimePlaceholder"
             android:layout_weight="1"/>
         <TextView
             android:id="@+id/totalTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="0:30"
+            android:text="@string/totalTimePlaceholder"
             android:gravity="right"
             android:layout_weight="1"/>
     </LinearLayout>
@@ -67,17 +70,30 @@
         android:orientation="horizontal"
         android:gravity="center">
         <ImageButton
+            android:id="@+id/prevBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/contentDescriptionPrevious"
             android:src="@android:drawable/ic_media_previous"/>
         <ImageButton
             android:id="@+id/playBtn"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/contentDescriptionPlay"
             android:src="@android:drawable/ic_media_play"/>
         <ImageButton
+            android:id="@+id/pauseBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/contentDescriptionPause"
+            android:src="@android:drawable/ic_media_pause"/>
+        <ImageButton
+            android:id="@+id/nextBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/contentDescriptionNext"
             android:src="@android:drawable/ic_media_next"/>
     </LinearLayout>
+
 </LinearLayout>

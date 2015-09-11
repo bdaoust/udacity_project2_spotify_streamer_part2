@@ -1,56 +1,50 @@
 package org.bdaoust.project2spotifystreamerstage2.fragments;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
-
+import org.bdaoust.project2spotifystreamerstage2.adapters.ArtistAdapter;
+import org.bdaoust.project2spotifystreamerstage2.fetchdata.FetchArtistsTask;
 import org.bdaoust.project2spotifystreamerstage2.R;
-import org.bdaoust.project2spotifystreamerstage2.Tools;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.bdaoust.project2spotifystreamerstage2.data.SpotifyStreamerContract.ArtistEntry;
 
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Image;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+public class ArtistSearchFragment extends Fragment implements LoaderCallbacks<Cursor>, FetchArtistsTask.OnSearchForArtistListener{
 
-public class ArtistSearchFragment extends Fragment{
 
-    private ArtistListAdapter artistListAdapter;
-    private SpotifyService spotifyService;
     private Context context;
     private Toast toast;
-    private List<Artist> artists;
+    private ArtistSearchFragment artistSearchFragment;
+    private ListView artistSearchResults;
+    private String searchTerm = "";
+    private int artistListPosition = ListView.INVALID_POSITION;
+
+    private static final String SELECTED_KEY = "selected_position";
+    private static final String SEARCH_TERM_KEY = "search_term";
+
+    ArtistAdapter artistAdapter;
+
+    private static final int ARTISTS_LOADER = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SpotifyApi spotifyApi;
-
-        spotifyApi = new SpotifyApi();
-        spotifyService = spotifyApi.getService();
-
-        artists = new ArrayList<>();
-        artistListAdapter = new ArtistListAdapter();
+        artistSearchFragment = this;
     }
 
     @Override
@@ -58,87 +52,108 @@ public class ArtistSearchFragment extends Fragment{
 
         View rootView;
         EditText artistQuery;
-        ListView artistSearchResults;
         ArtistNameTextWatch artistNameTextWatch;
 
         rootView = inflater.inflate(R.layout.fragment_artist_search,null);
+
+        artistAdapter = new ArtistAdapter(getActivity(), null, 0);
 
         artistNameTextWatch = new ArtistNameTextWatch();
         artistQuery = (EditText)rootView.findViewById(R.id.artistQuery);
         artistQuery.addTextChangedListener(artistNameTextWatch);
 
         artistSearchResults = (ListView)rootView.findViewById(R.id.artistSearchResults);
-        artistSearchResults.setAdapter(artistListAdapter);
+        artistSearchResults.setAdapter(artistAdapter);
+        artistSearchResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor cursor = artistAdapter.getCursor();
+
+                if(cursor != null && cursor.moveToPosition(position)){
+                    long artistId;
+
+                    artistId = cursor.getLong(cursor.getColumnIndex(ArtistEntry._ID));
+
+                    ((OnArtistListChangeListener)getActivity()).onItemSelected(artistId);
+                }
+                artistListPosition = position;
+            }
+        });
+
+        if(savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)){
+            artistListPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
+        if(savedInstanceState != null && savedInstanceState.containsKey(SEARCH_TERM_KEY)){
+            searchTerm = savedInstanceState.getString(SEARCH_TERM_KEY);
+        }
 
         return rootView;
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
         context = getActivity();
+        getLoaderManager().initLoader(ARTISTS_LOADER, null, this);
+
+
+        super.onActivityCreated(savedInstanceState);
     }
 
-    private class ArtistListAdapter extends BaseAdapter {
+    @Override
+    public void onResume() {
+        super.onResume();
 
-        @Override
-        public int getCount() {
-            return artists.size();
+        getLoaderManager().restartLoader(ARTISTS_LOADER, null, this);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        return new CursorLoader(
+                getActivity(),
+                ArtistEntry.buildArtistsUriWithSearchTerm(searchTerm),
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        artistAdapter.swapCursor(data);
+
+        if(artistListPosition != ListView.INVALID_POSITION){
+            artistSearchResults.smoothScrollToPosition(artistListPosition);
+
+            artistSearchResults.setSelection(artistListPosition);
         }
 
-        @Override
-        public Object getItem(int position) {
-            return artists.get(position);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        artistAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onArtistSearchSuccess(boolean artistsFound) {
+        if(!artistsFound) {
+            artistAdapter.swapCursor(null);
+            toast = Toast.makeText(context, getText(R.string.search_result_no_artists_found), Toast.LENGTH_SHORT);
+            toast.show();
         }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View artistView;
-            TextView artistName;
-            final ImageView artistIcon;
-            Image preferedArtistImage;
-
-            if(convertView == null) {
-                artistView = getActivity().getLayoutInflater().inflate(R.layout.artist_list_item, null);
-            }
-            else {
-                artistView = convertView;
-            }
-
-            artistName = (TextView)artistView.findViewById(R.id.artistName);
-            artistIcon = (ImageView)artistView.findViewById(R.id.artistIcon);
-
-            artistName.setText(artists.get(position).name);
-            artistIcon.setImageBitmap(null);
-
-            preferedArtistImage = Tools.findPreferedSizeImage(artists.get(position).images, 200);
-            if(preferedArtistImage !=null) {
-                Picasso.with(context).load(preferedArtistImage.url).into(artistIcon);
-            }
-
-            artistView.setTag(artists.get(position));
-
-            artistView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Artist artist;
-
-                    artist = (Artist)v.getTag();
-                    ((OnArtistClickListener)getActivity()).onItemSelected(artist.name, artist.id);
-
-                }
-            });
-
-            return artistView;
+        else {
+            getLoaderManager().restartLoader(ARTISTS_LOADER, null, this);
         }
     }
 
+    @Override
+    public void onArtistSearchFailure() {
+        artistAdapter.swapCursor(null);
+    }
 
     private class ArtistNameTextWatch implements TextWatcher {
         @Override
@@ -150,25 +165,15 @@ public class ArtistSearchFragment extends Fragment{
 
         @Override
         public void onTextChanged(CharSequence artist, int start, int before, int count) {
-            spotifyService.searchArtists(artist.toString(), new Callback<ArtistsPager>() {
+            if(!searchTerm.equals(artist.toString())) {
+                FetchArtistsTask fetchArtistsTask;
 
-                @Override
-                public void success(ArtistsPager artistsPager, Response response) {
-                    artists = artistsPager.artists.items;
-                    artistListAdapter.notifyDataSetChanged();
+                searchTerm = artist.toString();
+                fetchArtistsTask = new FetchArtistsTask(context,artistSearchFragment);
+                fetchArtistsTask.fetch(artist.toString());
 
-                    if(artists.size() == 0){
-                        toast  = Toast.makeText(context, getText(R.string.search_result_no_artists_found), Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-                    artists.clear();
-                    artistListAdapter.notifyDataSetChanged();
-                }
-            });
+                ((OnArtistListChangeListener) getActivity()).onSearchTermChanged(searchTerm);
+            }
 
         }
 
@@ -177,7 +182,20 @@ public class ArtistSearchFragment extends Fragment{
         }
     }
 
-    public interface OnArtistClickListener {
-        void onItemSelected(String artistName, String artistId);
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if(artistListPosition != ListView.INVALID_POSITION){
+            outState.putInt(SELECTED_KEY, artistListPosition);
+        }
+        outState.putString(SEARCH_TERM_KEY,searchTerm);
+
+        super.onSaveInstanceState(outState);
     }
+
+    public interface OnArtistListChangeListener {
+        void onItemSelected(long artistId);
+
+        void onSearchTermChanged(String searchTerm);
+    }
+
 }

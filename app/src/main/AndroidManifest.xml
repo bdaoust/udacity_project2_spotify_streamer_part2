@@ -26,11 +26,10 @@
             android:parentActivityName=".activities.MainActivity" >
         </activity>
 
-        <activity
-            android:name=".activities.MediaPlayerActivity"
-            android:label="Media Player"
-            android:parentActivityName=".activities.TopTracksActivity" >
-        </activity>
+        <provider
+            android:authorities="org.bdaoust.project2spotifystreamerstage2"
+            android:exported="false"
+            android:name=".data.SpotifyStreamerProvider" />
 
     </application>
 

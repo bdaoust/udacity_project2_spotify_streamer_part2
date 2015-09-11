@@ -26,14 +26,14 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:textSize="@dimen/abc_text_size_small_material"
-            android:text="A Sky Full of Stars"/>
+            android:text="@string/albumNamePlaceholder"/>
         <TextView
             android:id="@+id/trackName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:textSize="@dimen/abc_text_size_small_material"
-            android:text="Ghost Stories"/>
+            android:text="@string/trackNamePlaceholder"/>
     </LinearLayout>
 
 </LinearLayout>
